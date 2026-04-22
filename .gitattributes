@@ -1,0 +1,2 @@
+*.ldf filter=lfs diff=lfs merge=lfs -text
+*.lds filter=lfs diff=lfs merge=lfs -text

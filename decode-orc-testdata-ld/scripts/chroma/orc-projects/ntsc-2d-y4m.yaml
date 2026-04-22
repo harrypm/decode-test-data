@@ -1,0 +1,59 @@
+# ORC Project File
+# Version: 1.0
+# Test: NTSC 2D Y4M
+# Equivalent to: ld-chroma-decoder -s 1 -l 10 -f ntsc2d -p y4m
+
+project:
+  name: NTSC_2D_Y4M
+  description: NTSC 2D decoder - Y4M output
+  version: 1.0
+  video_format: NTSC
+  source_format: Composite
+
+dag:
+  nodes:
+    - id: 1
+      stage: NTSC_Comp_Source
+      node_type: SOURCE
+      display_name: LD NTSC Source
+      x: -400
+      y: -200
+      parameters:
+        input_path:
+          type: string
+          value: ../../tbc/ldf/ntsc/clv/Bambi_CLV_NTSC_side1_JapanImport_LDG_2020-01-22_20-25-19_pos8483.tbc
+        
+    - id: 2
+      stage: field_map
+      node_type: TRANSFORM
+      display_name: Field Map (Frames 1-10)
+      x: -250
+      y: -200
+      parameters:
+        ranges:
+          type: string
+          value: 0-19
+    
+
+    - id: 3
+      stage: raw_video_sink
+      node_type: SINK
+      display_name: Chroma Decoder Sink
+      x: -100
+      y: -200
+      parameters:
+        output_path:
+          type: string
+          value: ../../rgb/ntsc_2d_y4m.y4m
+        decoder_type:
+          type: string
+          value: ntsc2d
+        output_format:
+          type: string
+          value: y4m
+  
+  edges:
+    - from: 1
+      to: 2
+    - from: 2
+      to: 3
