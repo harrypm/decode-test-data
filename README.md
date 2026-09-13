@@ -4,7 +4,7 @@
 toolchain — FLAC-compressed RF archives that decode to 4fsc TBC data.
 
 Used for regression testing and A/B comparison across the
-RF → decode → TBC → export pipeline.
+RF Capture → Decode → 4fsc TBC → YUV export pipeline.
 
 The canonical committed samples are **FLAC-compressed RF archives** (the raw
 FM RF captures). Decoding them produces **4fsc TBC data** (`.tbc` + metadata),
@@ -17,7 +17,13 @@ Samples are short clips (typically a few seconds) included under fair-use / rese
 
 ```
 decode-test-data/
-├── laserdisc/        FM RF archives from LaserDisc sources (.ldf / .lds), LFS-tracked
+├── tape/            FM RF archives from colour-under tape sources (.flac)
+│   ├── vhs/{pal,ntsc,secam,mesecam,palm}/
+│   ├── svhs/{pal,ntsc,...}/
+│   ├── betamax/{pal,ntsc,...}/
+│   ├── quadruplex/{pal,ntsc,secam,...}/
+│   └── scripts/decode_all_test_files.sh
+├── laserdisc/       FM RF archives from LaserDisc sources (.ldf / .lds), LFS-tracked
 │   ├── ntsc/{cav,clv}/            525-line disc samples by access mode
 │   ├── pal/{cav,clv}/             625-line disc samples by access mode
 │   ├── stacking/{ntsc,pal}/...    multi-pass stacking source sets
@@ -25,12 +31,6 @@ decode-test-data/
 │   ├── cx/                        CX-ADC / EFM audio test data
 │   ├── pal-misc/                  miscellaneous 625-line test cards
 │   └── scripts/chroma/            chroma-decoder reference project YAMLs
-├── tape/            FM RF archives from colour-under tape sources (.flac)
-│   ├── vhs/{pal,ntsc,secam,mesecam,palm}/
-│   ├── svhs/{pal,ntsc,...}/
-│   ├── betamax/{pal,ntsc,...}/
-│   ├── quadruplex/{pal,ntsc,secam,...}/
-│   └── scripts/decode_all_test_files.sh
 ├── composite/       Baseband composite video samples (separate top-level folder)
 └── s-video/         Baseband S-Video (Y/C) samples (separate top-level folder)
 ```
@@ -56,9 +56,9 @@ Large RF archives (`.ldf` / `.lds` / `.flac` > 50 MB) are stored via Git LFS
 | Tool | Purpose | Repo |
 |---|---|---|
 | **vhs-decode** | Decode colour-under tape FM RF (VHS/S-VHS/Beta/Quadruplex) → 4fsc TBC | https://github.com/oyvindln/vhs-decode |
-| **tape-decode-rust** | Rust decode front-end (profiles per tape format/system) → 4fsc TBC | (this toolchain) |
+| **tape-decode-rust** | Rust decode front-end (profiles per tape format/system) → 4fsc TBC | https://github.com/harrypm/tape-decode-rust|
 | **ld-decode** | Decode LaserDisc FM RF (.ldf/.lds) → 4fsc TBC | https://github.com/happycube/ld-decode |
-| **tbc-tools** | TBC post-processing: chroma-decoder, dropout-correct, analyse, video-export | https://github.com/happycube/ld-decode (tbc-tools) |
+| **tbc-tools** | TBC post-processing: analyse, chroma-decoder, dropout-correct, video-export | https://github.com/harrypm/tbc-tools |
 | **FLAC-Chop** | Sample-exact cutting of FLAC-compressed RF archives | https://github.com/harrypm/FLAC-Chop |
 | **git-lfs** | Large-file storage for RF archives | https://git-lfs.com |
 
@@ -69,7 +69,7 @@ compare the output frame-by-frame against a known-good baseline.
 
 ### 1. Capture / locate the FM RF source
 
-A full-length FM RF capture (FLAC-compressed, from MISRC/DdD/cxadc). Note its
+A full-length FM RF capture (FLAC-compressed, from [MISRC GUI](github.com/harrypm/MISRC-GUI) Ideally). Note its
 real sample rate from the in-file tags (`RF_SAMPLE_RATE`) — RF FLAC headers use
 the `/1000` convention (a 40 MSPS capture reports 40000 Hz in the FLAC header).
 
@@ -108,11 +108,6 @@ tape-decode decode --profile MESECAM_VHS \
   --metadata-out out_clip.tbc.json out_clip.flac
 ```
 
-**ld-decode** (LaserDisc RF):
-```bash
-ld-decode --pal -l 50 --overwrite out_clip.ldf out_clip
-```
-
 For SECAM/MESECAM, the decode uses the 625-line PAL geometry; the SECAM
 colourimetry is handled by the chroma decoder (`-f secam`) in the next step.
 Quadruplex SECAM uses the `PAL_QUADRUPLEX` (625-line) profile.
@@ -142,8 +137,3 @@ commit **only** the RF archive. The generated 4fsc TBC data (`.tbc`,
 git add tape/quadruplex/secam/secam_example_clip.flac
 git commit -m "test: add SECAM quadruplex colorbar reference clip"
 ```
-
-## License
-
-See `tape/LICENSE`. Samples are provided for non-infringing fair-use research
-to support the open-source video-decode toolchain.
