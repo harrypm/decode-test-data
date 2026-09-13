@@ -1,1 +1,0 @@
-../../ve-snw-cut.lds

@@ -1,0 +1,58 @@
+# ORC Project File
+# Version: 1.0
+# Test: PAL Transform2D RGB
+# Equivalent to: ld-chroma-decoder -s 1 -l 10 -f transform2d -p rgb
+
+project:
+  name: PAL_Transform2D_RGB
+  description: PAL Transform2D decoder - RGB output
+  version: 1.0
+  video_format: PAL
+  source_format: Composite
+
+dag:
+  nodes:
+    - id: 1
+      stage: PAL_Comp_Source
+      node_type: SOURCE
+      display_name: LD PAL Source
+      x: -400
+      y: -200
+      parameters:
+        input_path:
+          type: string
+          value: ../../tbc/ldf/pal/clv/Domesday_DD86-DS1_NationalB_PP_20191014_CLV_PAL_00-60_pos32794.tbc
+    
+    - id: 2
+      stage: field_map
+      node_type: TRANSFORM
+      display_name: Field Map (Frames 1-10)
+      x: -250
+      y: -200
+      parameters:
+        ranges:
+          type: string
+          value: 0-19
+    
+    - id: 3
+      stage: raw_video_sink
+      node_type: SINK
+      display_name: Chroma Decoder Sink
+      x: -100
+      y: -200
+      parameters:
+        output_path:
+          type: string
+          value: ../../rgb/pal_transform2d_rgb.rgb
+        decoder_type:
+          type: string
+          value: transform2d
+        output_format:
+          type: string
+          value: rgb
+  
+  edges:
+    - from: 1
+      to: 2
+    - from: 2
+      to: 3

@@ -1,0 +1,6 @@
+# Decoded output files (regenerated from the committed RF .flac sources)
+*.tbc
+*.tbc.json
+*.tbc.db
+*.log
+tbc/
