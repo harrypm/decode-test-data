@@ -1,21 +1,50 @@
-# decode-orc-testdata-ld
-A repository of LaserDisc test data for the Decode Orc project - it is intended to be used as a decode-orc git sub-module.
+# laserdisc (stacking)
+
+LaserDisc RF capture test data for the video-decode toolchain — multi-pass
+**stacking** source sets used to verify frame alignment and stacking algorithms.
 
 ## Overview
-This repository contains ld-decode test data used for the verification of the decode-orc project with the ld-decode front-end.
 
-The test data in this repository is in LDF format which is the native input format for ld-decode.  This is so the test procedure can run end-to-end, starting with ld-decode decoding the LDF files into TBC (and associated files) which are then sourced by decode-orc for processing.
+This directory contains ld-decode test data. The test data is in LDF/LDS
+format, the native input format for ld-decode, so the test procedure runs
+end-to-end: ld-decode turns the RF captures into TBC video (and associated
+metadata), which is then colour-decoded, dropout-corrected and exported by
+**tbc-tools**.
 
-Note: Any copyright material is included under fair-use, research.  All material are short clips of less than 5 seconds.
+Note: Any copyright material is included under fair-use, research. All material
+is short clips of a few seconds.
+
+## Tools
+
+| Tool | Role |
+|---|---|
+| [ld-decode](https://github.com/happycube/ld-decode) | Decode LaserDisc RF (.ldf/.lds) → TBC |
+| [tbc-tools](https://github.com/happycube/ld-decode) | TBC post-processing: `ld-chroma-decoder`, `ld-dropout-correct`, `ld-analyse`, `tbc-video-export` |
+| [git-lfs](https://git-lfs.com) | Large-file storage for `.ldf` / `.lds` |
+
+### tbc-tools (post-decode TBC processing)
+
+tbc-tools operates on the TBC output produced by ld-decode:
+
+- **ld-chroma-decoder** — colour-decodes the TBC to RGB48 / YUV444P16 / GRAY16
+  (NTSC1D/2D/3D, PAL2D/transform2D/3D decoders).
+- **ld-dropout-correct** — multi-source dropout correction; the stacking sets
+  in `stacking/` are the inputs for its multi-pass correction.
+- **ld-analyse** — GUI viewer / analyser for TBCs (chroma preview, VBI,
+  dropout overlay, export dialog).
+- **tbc-video-export** — orchestrates dropout-correct + chroma-decode + ffmpeg
+  encode into final containers (FFV1/ProRes/AV1 in MKV/MOV/MP4), with proxy
+  generation and aspect-ratio/MKV-header normalisation.
 
 ## Repository Structure
 
-The repository is organized into two main directories:
+LaserDisc data is subdivided by disc system (ntsc/pal), then by access mode
+(cav/clv):
 
-### `ldf/`
-Contains standard LaserDisc test files organized by video standard and disc format:
+### `ntsc/` and `pal/`
+Contains standard LaserDisc test files organized by disc format:
 ```
-ldf/
+laserdisc/
 ├── ntsc/
 │   ├── cav/    # NTSC CAV (Constant Angular Velocity) discs
 │   └── clv/    # NTSC CLV (Constant Linear Velocity) discs
@@ -30,10 +59,10 @@ Test files include a variety of LaserDisc content:
 - **PAL CAV**: BBC Domesday Project discs, British Garden Birds, EcoDisc, Roger Rabbit
 - **PAL CLV**: BBC Domesday Project National B discs, BBC Archives
 
-### `ldf-stacking/`
+### `stacking/`
 Contains LaserDisc files specifically for testing frame stacking functionality:
 ```
-ldf-stacking/
+stacking/
 ├── ntsc/
 │   └── cav/    # Multiple captures of Dragons Lair for testing stacking
 └── pal/
@@ -42,6 +71,12 @@ ldf-stacking/
 ```
 
 These files represent multiple captures of the same content from different discs or at different positions, useful for testing frame alignment and stacking algorithms.
+
+### Other subdirectories
+- `issues/<n>/` — clips attached to ld-decode bug reports
+- `cx/` — CX-ADC / EFM audio test data
+- `pal-misc/` — miscellaneous PAL test cards
+- `scripts/chroma/` — ld-chroma-decoder reference project YAMLs
 
 ## Usage
 
@@ -57,33 +92,15 @@ Use the provided script to decode all test files:
 ./scripts/decode_all_test_files.sh
 ```
 
-This script will:
-1. Process all `.ldf` files in both `ldf/` and `ldf-stacking/` directories
-2. Automatically detect PAL vs NTSC from the directory structure
-3. Create TBC files in the `tbc/` output directory (mirroring the source structure)
-4. Generate `.tbc` and `.tbc.json` files for each input
-5. Clean up unnecessary output files (`.efm`, `.pcm`, `.log`)
-6. Display progress and summary statistics
+This will process the `.ldf` files, auto-detect PAL/NTSC from the directory
+structure, and write TBC files into the `tbc/` output directory (mirroring the
+source structure), producing `.tbc` and `.tbc.json` per input. Unnecessary
+outputs (`.efm`, `.pcm`, `.log`) are cleaned up.
 
 ### Output Structure
 
-Decoded files are saved to:
-```
-tbc/
-├── ldf/
-│   ├── ntsc/
-│   │   ├── cav/
-│   │   └── clv/
-│   └── pal/
-│       ├── cav/
-│       └── clv/
-└── ldf-stacking/
-    ├── ntsc/
-    │   └── cav/
-    └── pal/
-        ├── cav/
-        └── clv/
-```
+Decoded files are saved to a `tbc/` output directory mirroring the source
+structure under `laserdisc/{ntsc,pal}/{cav,clv}/` and `laserdisc/stacking/`.
 
 Each `.ldf` file produces:
 - `<filename>.tbc` - Time Base Corrected video data
